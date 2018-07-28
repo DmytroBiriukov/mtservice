@@ -13,12 +13,11 @@ class TestResponse:public TBasicResponse{
     TestResponse(){}
 };
 
-class TestService : public TMTService<TestRequest, TestResponse, char*>
+class TestService : public TMTService
 {
   public:
     TestService(std::string port, int threadsNumber):
-        TMTService<TestRequest, TestResponse, char*>
-        ("0.0.0.0", port, threadsNumber, this->handle_request_, this->parse_request_ )
+        TMTService("0.0.0.0", port, threadsNumber)
     {
     }
 
@@ -28,29 +27,22 @@ class TestService : public TMTService<TestRequest, TestResponse, char*>
         return 0;
     }
 
-    static int parse_request_(TestRequest& req, char* begin, char* end){
-        while(begin != end) req.content.push_back(*begin++);
-        return 0;
-    }
-    static int handle_request_(TestRequest& req, TestResponse& res){
-        res.content = std::string("HTTP/1.1 200 OK\r\nServer: logrtbd\r\nContent-Length: 2");
-        res.content+= std::string("\r\nContent-Type: text/plain\r\nConnection: Closed\r\n\r\nOK");
-        return 0;
-    }
-
-    int parse_request(TestRequest& req, char* begin, char* end){
-        req.capital_letters_count=0;
-        while(begin != end){
-            if(isupper(*begin)) req.capital_letters_count++;
-            req.content.push_back(*begin++);
-        }
-        return 0;
-    }
-
-    int handle_request(TestRequest& req, TestResponse& res){
-       req.content+="\nAnd there is "+std::to_string(req.capital_letters_count)+" capital letters in this text";
-       res.content = std::string("HTTP/1.1 200 OK\r\nServer: logrtbd\r\nContent-Length: ")+std::to_string(req.content.size());
-       res.content+= std::string("\r\nContent-Type: text/plain\r\nConnection: Closed\r\n\r\n")+req.content;
+    int handle_request(char* begin, char* end, TBasicResponse& res){
+       TestRequest test_req;
+       TestResponse test_res;
+       // parsing with some protocol requirements check
+       // any special classes aka TRequest or TResponse are used inside handle_request exceptionally
+       test_req.capital_letters_count=0;
+       while(begin != end){
+           if(isupper(*begin)) test_req.capital_letters_count++;
+           test_req.content.push_back(*begin++);
+       }
+       // compile response
+       // ...
+       test_req.content+="\nAnd there is "+std::to_string(test_req.capital_letters_count)+" capital letters in this text";
+       // fill response content
+       res.content = std::string("HTTP/1.1 200 OK\r\nServer: logrtbd\r\nContent-Length: ")+std::to_string(test_req.content.size());
+       res.content+= std::string("\r\nContent-Type: text/plain\r\nConnection: Closed\r\n\r\n")+test_req.content;
        return 0;
     }
 };
