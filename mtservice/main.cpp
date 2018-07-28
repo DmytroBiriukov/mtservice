@@ -5,6 +5,7 @@ class TestRequest: public TBasicRequest{
  public:
     TestRequest(){
     }
+    int capital_letters_count;
 };
 
 class TestResponse:public TBasicResponse{
@@ -38,11 +39,16 @@ class TestService : public TMTService<TestRequest, TestResponse, char*>
     }
 
     int parse_request(TestRequest& req, char* begin, char* end){
-        while(begin != end) req.content.push_back(*begin++);
+        req.capital_letters_count=0;
+        while(begin != end){
+            if(isupper(*begin)) req.capital_letters_count++;
+            req.content.push_back(*begin++);
+        }
         return 0;
     }
 
     int handle_request(TestRequest& req, TestResponse& res){
+       req.content+="\nAnd there is "+std::to_string(req.capital_letters_count)+" capital letters in this text";
        res.content = std::string("HTTP/1.1 200 OK\r\nServer: logrtbd\r\nContent-Length: ")+std::to_string(req.content.size());
        res.content+= std::string("\r\nContent-Type: text/plain\r\nConnection: Closed\r\n\r\n")+req.content;
        return 0;
